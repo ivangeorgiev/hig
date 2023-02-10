@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework",
+    "builder"
 ]
 
 MIDDLEWARE = [
@@ -121,3 +123,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+WALL_HEIGHT = 30
+FOOT_VOLUME = 195
+VOLUME_PRICE = 1900
+
+IS_MULTI_THREADED = False
+THREADS_NUMBER = 4
+WALL_FILE = BASE_DIR / "data.txt"
