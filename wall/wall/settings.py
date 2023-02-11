@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -130,4 +131,4 @@ VOLUME_PRICE = 1900
 
 IS_MULTI_THREADED = False
 THREADS_NUMBER = 4
-WALL_FILE = BASE_DIR / "data.txt"
+WALL_FILE = os.environ.get("WALL_FILE") or BASE_DIR / "data.txt"

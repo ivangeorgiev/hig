@@ -25,13 +25,6 @@ class History:
         data = builder.read_data()
         builder.build(data)
 
-        """
-        print(History.amount_per_section_per_day(1, 1))
-        print(History.price_per_section_per_day(1, 1))
-        print(History.price_per_day(1))
-        print(History.overall())
-        """
-
     @staticmethod
     def amount_per_section_per_day(section, day):
         if section not in History.sections:
@@ -97,6 +90,7 @@ class HistoryBuilder:
 class SimpleHistoryBuilder(HistoryBuilder):
     def build(self, data):
         day = 1
+        History.sections = {}
         for section in data:
             History.sections[section] = {}
 
