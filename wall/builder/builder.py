@@ -7,16 +7,12 @@ from wall import settings
 LOGGER = logging.getLogger(__name__)
 
 
-def init_history():
-    LOGGER.info("Initializing history")
-    History.build()
-
-
 class History:
     profiles = {}
 
     @staticmethod
     def build():
+        LOGGER.info("Building history")
         if settings.IS_MULTI_THREADED:
             builder = MultiThreadedHistoryBuilder()
             logging.info("Building the walls with MultiThreadedHistoryBuilder")
@@ -27,25 +23,25 @@ class History:
         builder.build(data)
 
     @staticmethod
-    def amount_per_profile_per_day(section, day):
-        if section not in History.profiles:
+    def amount_per_profile_per_day(profile, day):
+        if profile not in History.profiles:
             return 0
-        if day not in History.profiles[section]:
+        if day not in History.profiles[profile]:
             return 0
-        return History.profiles[section][day] * settings.FOOT_VOLUME
+        return History.profiles[profile][day] * settings.FOOT_VOLUME
 
     @staticmethod
-    def price_per_profile_per_day(section, day):
-        if section not in History.profiles:
+    def price_per_profile_per_day(profile, day):
+        if profile not in History.profiles:
             return 0
-        if day not in History.profiles[section]:
+        if day not in History.profiles[profile]:
             return 0
-        return History.profiles[section][day] * settings.FOOT_VOLUME * settings.VOLUME_PRICE
+        return History.profiles[profile][day] * settings.FOOT_VOLUME * settings.VOLUME_PRICE
 
     @staticmethod
     def price_per_day(day):
         total = 0
-        for section, history in History.profiles.items():
+        for profile, history in History.profiles.items():
             if day not in history:
                 continue
             total += history[day]
@@ -54,7 +50,7 @@ class History:
     @staticmethod
     def overall():
         total = 0
-        for section, history in History.profiles.items():
+        for profile, history in History.profiles.items():
             for day, amount in history.items():
                 total += amount
         return total * settings.FOOT_VOLUME * settings.VOLUME_PRICE
