@@ -20,7 +20,7 @@ class TestHistoryBuilder(TestCase):
         settings.WALL_FILE = settings.BASE_DIR / "data.txt"
         History.build()
 
-        # self.assertEqual(History.amount_per_profile_per_day(1, 1), 585)
-        # self.assertEqual(History.price_per_profile_per_day(1, 1), 1111500)
-        # self.assertEqual(History.price_per_day(1), 370500)
+        self.assertEqual(History.amount_per_profile_per_day(1, 1), 390)
+        self.assertEqual(History.price_per_profile_per_day(1, 1), 741000)
+        self.assertEqual(History.price_per_day(1), 741000)
         self.assertEqual(History.overall(), 32233500)
