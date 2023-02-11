@@ -125,16 +125,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-WALL_HEIGHT = 30
-FOOT_VOLUME = 195
-VOLUME_PRICE = 1900
-
-IS_MULTI_THREADED = False
-THREADS_NUMBER = 4
-WALL_FILE = os.environ.get("WALL_FILE") or BASE_DIR / "data.txt"
-
-
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -145,17 +135,24 @@ LOGGING = {
             'filename': BASE_DIR / 'wall.log',
             'formatter': 'verbose',
         },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         '': {
-            'handlers': ['file'],
+            # 'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
     },
     'formatters': {
         'verbose': {
-            'format': '{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            #'format': '{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{name} {levelname} {asctime} {message}',
             'style': '{',
         },
         'simple': {
@@ -164,3 +161,11 @@ LOGGING = {
         },
     },
 }
+
+WALL_HEIGHT = 30
+FOOT_VOLUME = 195
+VOLUME_PRICE = 1900
+
+IS_MULTI_THREADED = False
+THREADS_NUMBER = 4
+WALL_FILE = os.environ.get("WALL_FILE") or BASE_DIR / "data.txt"
