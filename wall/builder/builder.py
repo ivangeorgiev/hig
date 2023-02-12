@@ -164,13 +164,10 @@ class MultiThreadedHistoryBuilder(HistoryBuilder):
         self._partitions = []
         for profile, sections in data.items():
             for idx, section in enumerate(sections):
-                partition = []
-                for height in range(section, settings.WALL_HEIGHT):
-                    partition.append(height + 1)
                 self._partitions.append({
                     "profile": profile,
                     "section": idx + 1,
-                    "data": partition,
+                    "height": section,
                 })
         LOGGER.info("Partitions ready.")
 
@@ -186,10 +183,13 @@ class MultiThreadedHistoryBuilder(HistoryBuilder):
 
         while not self.is_ready():
             for idx in range(1,  settings.THREADS_NUMBER + 1):
-                if self.schedule[idx] and len(self.schedule[idx]["data"]) == 0:
+                if self.schedule[idx] and self.schedule[idx]["height"] >= settings.WALL_HEIGHT:
                     self.schedule[idx] = self.get_next_partition()
                     if self.schedule[idx] is None:
                         LOGGER.info("Build worker {} is ready.".format(idx))
+                    else:
+                        LOGGER.info("Build worker {} moves to profile {}, section {}.".format(
+                            idx, self.schedule[idx]["profile"], self.schedule[idx]["section"]))
 
             self._barrier = threading.Barrier(self.active_workers + 1)
             for idx in range(1,  settings.THREADS_NUMBER + 1):
@@ -219,11 +219,10 @@ class BuilderThread(threading.Thread):
 
     def run(self):
         partition = self.builder.schedule[self.idx]
-        # height = self.builder.schedule[self.idx]["data"].pop(0)
-        height = partition["data"].pop(0)
+        partition["height"] += 1
 
         LOGGER.info("On day {} build worker {} extended section {} of profile {} to {} feet.".format(
-            self.builder.day, self.idx, partition["section"], partition["profile"], height
+            self.builder.day, self.idx, partition["section"], partition["profile"], partition["height"]
         ))
         self.builder.build_profile(partition["profile"], self.builder.day)
         self.builder.barrier.wait()
