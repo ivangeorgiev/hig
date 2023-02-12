@@ -41,7 +41,7 @@ class History:
     @staticmethod
     def price_per_day(day):
         total = 0
-        for profile, history in History.profiles.items():
+        for history in History.profiles.values():
             if day not in history:
                 continue
             total += history[day]
@@ -50,7 +50,7 @@ class History:
     @staticmethod
     def overall():
         total = 0
-        for profile, history in History.profiles.items():
+        for history in History.profiles.values():
             for day, amount in history.items():
                 total += amount
         return total * settings.FOOT_VOLUME * settings.VOLUME_PRICE
@@ -80,50 +80,84 @@ class HistoryBuilder:
 
         return data
 
+    def __init__(self):
+        self._day = 1
+        self._partitions = []
+
+    @property
+    def day(self):
+        return self._day
+
+    def is_ready(self):
+        raise NotImplementedError()
+
+    def build_profile(self, profile, day):
+        raise NotImplementedError()
+
     def build(self, data):
         raise NotImplementedError()
 
+    def _make_partitions(self, data):
+        LOGGER.info("Preparing partitions ...")
+        self._partitions = []
+        for profile, sections in data.items():
+            for idx, section in enumerate(sections):
+                self._partitions.append({
+                    "profile": profile,
+                    "section": idx + 1,
+                    "height": section,
+                })
+        LOGGER.info("Partitions ready.")
+
 
 class SimpleHistoryBuilder(HistoryBuilder):
+    def __init__(self):
+        super().__init__()
+        self._amount_added = 0
+
+    def is_ready(self):
+        return self._amount_added == 0
+
+    def build_profile(self, profile, day):
+        if profile not in History.profiles:
+            History.profiles[profile] = {}
+        if day not in History.profiles[profile]:
+            History.profiles[profile][day] = 0
+        History.profiles[profile][day] += 1
+
     def build(self, data):
-        day = 1
         History.profiles = {}
-        for section in data:
-            History.profiles[section] = {}
+        self._day = 1
+        self._make_partitions(data)
 
         while True:
-            amount_added = 0
-            for profile, sections in data.items():
-                for idx, height in enumerate(sections):
-                    if height >= settings.WALL_HEIGHT:
-                        continue
+            self._amount_added = 0
+            for partition in self._partitions:
+                if partition["height"] >= settings.WALL_HEIGHT:
+                    continue
 
-                    if day not in History.profiles[profile]:
-                        History.profiles[profile][day] = 0
-                    data[profile][idx] += 1
-                    History.profiles[profile][day] += 1
-                    amount_added += 1
+                partition["height"] += 1
+                self._amount_added += 1
+                self.build_profile(partition["profile"], self.day)
 
-            if amount_added == 0:
+            if self.is_ready():
+                LOGGER.info("Ready. Wall was build in {} days.".format(self.day))
                 break
-            day += 1
+
+            LOGGER.info("On day {} the wall workers extended {} sections.".format(self.day, self._amount_added))
+            self._day += 1
 
 
 class MultiThreadedHistoryBuilder(HistoryBuilder):
     def __init__(self):
-        self._partitions = []
+        super().__init__()
         self._profile_locks = {}
-        self._day = 1
         self._schedule = {}
         self._barrier = None
 
     @property
     def schedule(self):
         return self._schedule
-
-    @property
-    def day(self):
-        return self._day
 
     @property
     def active_workers(self):
@@ -158,18 +192,6 @@ class MultiThreadedHistoryBuilder(HistoryBuilder):
         self._profile_locks = {}
         for profile in data:
             self._profile_locks[profile] = threading.Lock()
-
-    def _make_partitions(self, data):
-        LOGGER.info("Preparing partitions ...")
-        self._partitions = []
-        for profile, sections in data.items():
-            for idx, section in enumerate(sections):
-                self._partitions.append({
-                    "profile": profile,
-                    "section": idx + 1,
-                    "height": section,
-                })
-        LOGGER.info("Partitions ready.")
 
     def build(self, data):
         History.profiles = {}
